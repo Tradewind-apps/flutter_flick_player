@@ -3,21 +3,21 @@ description: Flick Video Player is a video player for flutter. The video_player 
 repository: https://github.com/GeekyAnts/flick-video-player
 homepage: https://github.com/GeekyAnts/flick-video-player
 
-version: 0.5.0
+version: 0.5.2
 
 environment:
-  sdk: '>=2.14.0 <3.0.0'
-  flutter: '>=2.10.0'
+  sdk: ">=3.0.0 <3.15.0"
+  flutter: ">=3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  video_player: 2.6.1
-  provider: 6.0.5
+  video_player: 2.8.6
+  provider: 6.1.2
   wakelock: 0.6.2
-  universal_html: 2.0.9
-  dio: 5.0.1
-  path_provider: 2.0.15
+  universal_html: 2.2.4
+  dio: 5.4.3+1 
+  path_provider: 2.1.3
 
 dev_dependencies:
   flutter_test:
