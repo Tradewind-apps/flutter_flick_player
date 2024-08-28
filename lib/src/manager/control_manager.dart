@@ -48,8 +48,8 @@ class FlickControlManager extends ChangeNotifier {
           _flickManager.flickVideoManager?.videoPlayerValue?.position;
       final isPlayerPlaying = _isPlaying;
       if (position != null && playerController != null) {
-        final videoController = VideoPlayerController.network(
-          playerController.dataSource,
+        final videoController = VideoPlayerController.networkUrl(
+          Uri.parse(playerController.dataSource),
         )..initialize();
         Future.delayed(Duration(milliseconds: 900), () async {
           _flickManager.handleChangeVideo(videoController);
