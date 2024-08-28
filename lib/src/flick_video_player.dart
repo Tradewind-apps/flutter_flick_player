@@ -68,15 +68,29 @@ class FlickVideoPlayer extends StatefulWidget {
   _FlickVideoPlayerState createState() => _FlickVideoPlayerState();
 }
 
-class _FlickVideoPlayerState extends State<FlickVideoPlayer> {
+class _FlickVideoPlayerState extends State<FlickVideoPlayer>
+    with WidgetsBindingObserver {
   late FlickManager flickManager;
   bool _isFullscreen = false;
   OverlayEntry? _overlayEntry;
+  double? _videoWidth;
+  double? _videoHeight;
 
   @override
   void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addObserver(this);
     flickManager = widget.flickManager;
-    flickManager.registerContext(context);
+
+    // Register context and perform initialization in post-frame callback
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      flickManager.registerContext(context);
+      _initializeFlickManager();
+    });
+  }
+
+  void _initializeFlickManager() {
     flickManager.flickControlManager!.addListener(listener);
     _setSystemUIOverlays();
     _setPreferredOrientation();
@@ -90,8 +104,6 @@ class _FlickVideoPlayerState extends State<FlickVideoPlayer> {
           .listen(_webFullscreenListener);
       document.documentElement?.onKeyDown.listen(_webKeyListener);
     }
-
-    super.initState();
   }
 
   @override
@@ -100,7 +112,17 @@ class _FlickVideoPlayerState extends State<FlickVideoPlayer> {
     if (widget.wakelockEnabled) {
       WakelockPlus.disable();
     }
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  Future<bool> didPopRoute() async {
+    if (_overlayEntry != null) {
+      flickManager.flickControlManager!.exitFullscreen();
+      return true;
+    }
+    return false;
   }
 
   // Listener on [FlickControlManager],
@@ -126,19 +148,24 @@ class _FlickVideoPlayerState extends State<FlickVideoPlayer> {
     _setSystemUIOverlays();
     if (kIsWeb) {
       document.documentElement?.requestFullscreen();
+      Future.delayed(Duration(milliseconds: 100), () {
+        _videoHeight = MediaQuery.of(context).size.height;
+        _videoWidth = MediaQuery.of(context).size.width;
+        setState(() {});
+      });
+    } else {
+      _overlayEntry = OverlayEntry(builder: (context) {
+        return Scaffold(
+          body: FlickManagerBuilder(
+            flickManager: flickManager,
+            child: widget.flickVideoWithControlsFullscreen ??
+                widget.flickVideoWithControls,
+          ),
+        );
+      });
+
+      Overlay.of(context).insert(_overlayEntry!);
     }
-
-    _overlayEntry = OverlayEntry(builder: (context) {
-      return Scaffold(
-        body: FlickManagerBuilder(
-          flickManager: flickManager,
-          child: widget.flickVideoWithControlsFullscreen ??
-              widget.flickVideoWithControls,
-        ),
-      );
-    });
-
-    Overlay.of(context).insert(_overlayEntry!);
   }
 
   _exitFullscreen() {
@@ -152,10 +179,13 @@ class _FlickVideoPlayerState extends State<FlickVideoPlayer> {
 
     if (kIsWeb) {
       document.exitFullscreen();
+      _videoHeight = null;
+      _videoWidth = null;
+      setState(() {});
+    } else {
+      _overlayEntry?.remove();
+      _overlayEntry = null;
     }
-
-    _overlayEntry?.remove();
-    _overlayEntry = null;
     _setPreferredOrientation();
     _setSystemUIOverlays();
   }
@@ -198,14 +228,9 @@ class _FlickVideoPlayerState extends State<FlickVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () {
-        if (_overlayEntry != null) {
-          flickManager.flickControlManager!.exitFullscreen();
-          return Future.value(false);
-        }
-        return Future.value(true);
-      },
+    return SizedBox(
+      width: _videoWidth,
+      height: _videoHeight,
       child: FlickManagerBuilder(
         flickManager: flickManager,
         child: widget.flickVideoWithControls,

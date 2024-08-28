@@ -8,10 +8,7 @@ import '../../../feed_player/portrait_controls.dart';
 
 class FlickMultiPlayer extends StatefulWidget {
   const FlickMultiPlayer(
-      {Key? key,
-      required this.url,
-      this.image,
-      required this.flickMultiManager})
+      {Key? key, required this.url, this.image, required this.flickMultiManager})
       : super(key: key);
 
   final String url;
@@ -28,9 +25,8 @@ class _FlickMultiPlayerState extends State<FlickMultiPlayer> {
   @override
   void initState() {
     flickManager = FlickManager(
-      videoPlayerController:
-          VideoPlayerController.contentUri(Uri.file(widget.url))
-            ..setLooping(true),
+      videoPlayerController: VideoPlayerController.contentUri(Uri.file(widget.url))
+        ..setLooping(true),
       autoPlay: false,
     );
     widget.flickMultiManager.init(flickManager);
